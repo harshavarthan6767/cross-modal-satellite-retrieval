@@ -20,6 +20,7 @@ pandas>=2.0
 faiss-cpu>=1.7.4       # the "encoded numbers/binaries" store
 onnx>=1.15
 onnxruntime>=1.17      # fast CPU inference on the laptop
+onnxscript>=0.1.20240822  # required by recent torch.onnx (dynamo path)
 
 # API + UI
 fastapi>=0.109

@@ -57,6 +57,9 @@ def export_for_modality(
     dummy = torch.randn(1, channels, image_size, image_size, dtype=torch.float32)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # dynamo=False selects the legacy TorchScript exporter. The newer dynamo
+    # exporter requires `onnxscript` and is less reliable for timm ViT models;
+    # the legacy path handles the patch-embed + adapter graph cleanly.
     torch.onnx.export(
         model,
         dummy,
@@ -67,6 +70,7 @@ def export_for_modality(
         input_names=["image"],
         output_names=["embedding"],
         dynamic_axes={"image": {0: "batch"}, "embedding": {0: "batch"}},
+        dynamo=False,
     )
     print(f"[export] {modality:14s} -> {out_path}  (in {channels}ch, out {embed_dim}d)")
 
