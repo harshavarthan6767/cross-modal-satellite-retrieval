@@ -1,0 +1,3 @@
+# This directory holds generated artifacts:
+#   gallery.index, gallery_meta.parquet, metrics.json
+# Files are .gitignored; this placeholder keeps the directory in version control.

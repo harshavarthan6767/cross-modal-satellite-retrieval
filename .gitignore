@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+build/
+dist/
+.ipynb_checkpoints/
+
+# Environment / editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Data + model artifacts (large; do not commit)
+data/raw/
+data/processed/
+data/sen12ms/
+*.tif
+*.tiff
+*.zip
+*.tar
+*.tar.gz
+*.npy
+*.npz
+
+# Trained models + indexes (large; do not commit)
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.ckpt
+results/*.index
+results/*.parquet
+results/*.json
+checkpoints/
+
+# Logs
+*.log
+wandb/
+lightning_logs/
+mlruns/
+
+# Secrets
+.env
+*.key
+gcp-service-account.json
+
+# Colab / Drive mounts
+drive/
+content/

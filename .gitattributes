@@ -1,0 +1,19 @@
+# Normalise line endings across Windows / macOS / Linux contributors.
+* text=auto eol=lf
+
+# Binary file types — never attempt text diff/merge.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.onnx binary
+*.index binary
+*.parquet binary
+*.npy  binary
+*.npz  binary
+*.ckpt binary
+*.pt   binary
+*.pth  binary

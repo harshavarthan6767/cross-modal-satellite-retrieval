@@ -1,0 +1,103 @@
+# ============================================================================
+# Cross-Modal Satellite Image Retrieval — central configuration
+# All scripts read this file via retrieval.config (see __init__ helpers).
+# Paths are relative to the repo root unless absolute.
+# ============================================================================
+
+# ---- Paths ------------------------------------------------------------------
+paths:
+  repo_root: .                            # resolved to this file's parent
+  data_root: data/sen12ms                 # downloaded SEN12MS subset lives here
+  processed_root: data/processed          # resized/normalised .npy tensors
+  checkpoint_dir: checkpoints             # training checkpoints
+  onnx_path: models/retrieval_model.onnx  # exported ONNX model
+  gallery_index: results/gallery.index    # FAISS index (the "encoded store")
+  gallery_meta: results/gallery_meta.parquet
+  metrics_out: results/metrics.json
+
+# ---- Dataset ---------------------------------------------------------------
+dataset:
+  name: SEN12MS
+  num_triplets: 8000          # balanced subset size
+  seed: 42
+  image_size: 64              # all modalities resized to 64x64
+  # SEN12MS land-cover classes (MODIS IGBP) — we keep the standard 10.
+  num_classes: 10
+
+# Per-modality channel layout after preprocessing.
+#   sar           : Sentinel-1 VV, VH            -> 2 channels
+#   optical       : Sentinel-2 R, G, B           -> 3 channels
+#   multispectral : Sentinel-2 B,G,R,NIR         -> 4 channels
+modalities:
+  sar:
+    channels: 2
+    stats:                    # per-channel (mean, std) after decibel + clip
+      mean: [-12.5, -17.0]
+      std: [4.5, 4.5]
+    db_scale: true
+    db_clip: [-25.0, 0.0]
+  optical:
+    channels: 3
+    stats:
+      mean: [0.10, 0.10, 0.08]   # typical scaled reflectance
+      std: [0.04, 0.04, 0.04]
+  multispectral:
+    channels: 4                 # B, G, R, NIR
+    stats:
+      mean: [0.10, 0.10, 0.08, 0.25]
+      std: [0.04, 0.04, 0.04, 0.08]
+
+# ---- Splits ----------------------------------------------------------------
+splits:
+  train: 0.70
+  val: 0.10
+  eval: 0.20
+
+# ---- Model -----------------------------------------------------------------
+model:
+  backbone: vit_small_patch16_224   # timm name; stem adapted to 64x64
+  pretrained: true                  # ImageNet init, then fine-tune
+  embed_dim: 512                    # shared embedding space dimension
+  norm_output: true                 # L2-normalise embeddings
+
+# ---- Loss ------------------------------------------------------------------
+loss:
+  name: infonce
+  temperature: 0.07
+
+# ---- Training --------------------------------------------------------------
+train:
+  batch_size: 256
+  num_workers: 4
+  epochs: 30
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  warmup_epochs: 2
+  scheduler: cosine
+  grad_clip: 1.0
+  # Augmentations
+  aug:
+    random_crop: true
+    horizontal_flip: true
+    gaussian_noise_std: 0.01
+    sar_speckle_std: 0.05          # extra multiplicative speckle noise for SAR
+  checkpoint_every_n_epochs: 1     # Colab-disconnect safety
+
+# ---- Retrieval / Evaluation ------------------------------------------------
+retrieval:
+  index_type: flat_ip              # IndexFlatIP (cosine after L2-norm)
+  # For scaling to the full 180k dataset, switch to ivf_pq and set:
+  # ivf_nlist: 256
+  # pq_m: 32
+  # pq_nbits: 8
+  top_k: 10
+  # Query/gallery protocols to evaluate (source_modality -> target_modality)
+  protocols:
+    same_modal:   [sar2sar, opt2opt, ms2ms]
+    cross_modal:  [sar2opt, opt2sar, opt2ms, ms2opt]
+
+# ---- API -------------------------------------------------------------------
+api:
+  host: 0.0.0.0
+  port: 8000
+  max_upload_mb: 25

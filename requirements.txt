@@ -1,0 +1,30 @@
+# Core deep learning
+torch>=2.1,<3.0
+torchvision>=0.16
+timm>=0.9.12           # ViT backbones
+
+# Training framework
+pytorch-lightning>=2.1,<2.5
+pytorch-metric-learning>=2.5  # optional convenience for mining; InfoNCE implemented locally too
+
+# Data / geo
+numpy>=1.24
+pillow>=10.0
+rasterio>=1.3.9        # read Sentinel-1/2 patches
+pyarrow>=14.0          # parquet metadata sidecar
+pyyaml>=6.0
+tqdm>=4.66
+pandas>=2.0
+
+# Vector index + CPU inference
+faiss-cpu>=1.7.4       # the "encoded numbers/binaries" store
+onnx>=1.15
+onnxruntime>=1.17      # fast CPU inference on the laptop
+
+# API + UI
+fastapi>=0.109
+uvicorn[standard]>=0.27
+python-multipart>=0.0.6  # file uploads in FastAPI
+
+# Metrics
+scikit-learn>=1.3

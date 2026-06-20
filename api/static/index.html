@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cross-Modal Satellite Image Retrieval</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>🛰️ Cross-Modal Satellite Image Retrieval</h1>
+    <p class="subtitle">Upload SAR / optical / multispectral images to index, then query with a crop to retrieve top-5 / top-10.</p>
+    <div id="status-bar">
+      <span id="gallery-size">gallery: loading…</span>
+      <span id="model-status"></span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== SECTION 1: INDEX (add the 3 modalities of a location) ===== -->
+    <section class="card">
+      <h2>1 · Add images to the gallery (index)</h2>
+      <p class="hint">Each uploaded image of one modality is scanned box-by-box (ViT), encoded to a 512-d vector, and stored in FAISS. Upload one or more modalities for the same location.</p>
+
+      <div class="index-grid">
+        <div class="dropzone" data-modality="sar">
+          <span class="dz-label">SAR</span>
+          <span class="dz-hint">.tif / .png · VV,VH</span>
+          <input type="file" accept="image/*,.tif,.tiff" hidden />
+        </div>
+        <div class="dropzone" data-modality="optical">
+          <span class="dz-label">Optical</span>
+          <span class="dz-hint">.png / .jpg · RGB</span>
+          <input type="file" accept="image/*" hidden />
+        </div>
+        <div class="dropzone" data-modality="multispectral">
+          <span class="dz-label">Multispectral</span>
+          <span class="dz-hint">.tif / .png · B,G,R,NIR</span>
+          <input type="file" accept="image/*,.tif,.tiff" hidden />
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Land-cover label (optional):
+          <input type="number" id="index-label" min="0" max="9" placeholder="0–9" />
+        </label>
+        <button id="index-btn" disabled>Add to gallery</button>
+      </div>
+      <div id="index-feedback" class="feedback"></div>
+    </section>
+
+    <!-- ===== SECTION 2: QUERY (crop one modality) ===== -->
+    <section class="card">
+      <h2>2 · Query with a cropped image</h2>
+      <p class="hint">Upload a crop (even ¼ of an image), pick its modality, and retrieve the top-5 / top-10 most similar images from the gallery.</p>
+
+      <div class="query-row">
+        <div class="dropzone query" id="query-dropzone">
+          <span class="dz-label">Query crop</span>
+          <span class="dz-hint">drag/drop or click</span>
+          <input type="file" accept="image/*" id="query-file" hidden />
+        </div>
+        <div class="query-controls">
+          <label>Modality:
+            <select id="query-modality">
+              <option value="sar">SAR</option>
+              <option value="optical" selected>Optical</option>
+              <option value="multispectral">Multispectral</option>
+            </select>
+          </label>
+          <button id="query-btn" disabled>Retrieve top-10</button>
+          <div id="query-timing" class="timing"></div>
+        </div>
+      </div>
+      <div id="query-feedback" class="feedback"></div>
+    </section>
+
+    <!-- ===== SECTION 3: RESULTS ===== -->
+    <section class="card">
+      <h2>Results</h2>
+      <div id="results-empty" class="empty">No query yet — results will appear here.</div>
+      <div id="results-top5" class="result-group">
+        <h3>Top-5</h3>
+        <div class="gallery"></div>
+      </div>
+      <div id="results-top10" class="result-group">
+        <h3>Top-10</h3>
+        <div class="gallery"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>ViT-S/16 · contrastive (InfoNCE) · FAISS · ONNX Runtime (CPU). Built to run on a GPU-less laptop.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
