@@ -13,6 +13,7 @@ Colab notebook in this folder.
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
 
 import pytorch_lightning as pl
@@ -65,15 +66,18 @@ class RetrievalLightningModule(pl.LightningModule):
         t_cfg = self.cfg["train"]
         epochs = int(t_cfg["epochs"])
         warmup = int(t_cfg.get("warmup_epochs", 0))
-        steps_per_epoch = max(1, len(self.trainer.train_dataloader))
-        total_steps = epochs * steps_per_epoch
-        warmup_steps = warmup * steps_per_epoch
+        # trainer.train_dataloader is None at configure-time; use Lightning's
+        # own stepping-batch estimate instead.
+        total_steps = int(self.trainer.estimated_stepping_batches)
+        warmup_steps = int(total_steps * warmup / max(epochs, 1))
 
         def lr_lambda(step: int) -> float:
             if step < warmup_steps:
-                return float(step) / float(max(1, warmup_steps))
+                # +1 so the very first multiplier is non-zero (avoids the
+                # "lr_scheduler.step() before optimizer.step()" warning).
+                return float(step + 1) / float(max(1, warmup_steps))
             progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
-            return 0.5 * (1.0 + torch.cos(torch.tensor(progress * 3.14159)).item())
+            return 0.5 * (1.0 + math.cos(min(progress, 1.0) * math.pi))
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda)
         return {"optimizer": opt, "lr_scheduler": {"scheduler": scheduler,
@@ -115,8 +119,10 @@ def run_training(cfg: dict | None = None, resume: str | None = None) -> str:
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     ckpt_cb = pl.callbacks.ModelCheckpoint(
         dirpath=str(ckpt_dir),
-        filename="retrieval-{epoch:02d}-{val_loss:.4f}",
-        monitor="val_loss",
+        # Note: filename omits the metric value because its name ("val/loss")
+        # contains a slash, which Lightning would interpret as a path.
+        filename="retrieval-epoch{epoch:02d}",
+        monitor="val/loss",
         mode="min",
         save_top_k=1,
         save_last=True,
